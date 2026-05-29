@@ -1,13 +1,82 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  REQUESTER
+  APPROVER
+  APPROVER_SENIOR
+  ADMIN
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum RequestCategory {
+  EQUIPMENT
+  SERVICES
+  SUPPLIES
+  TRAVEL
+  OTHER
+}
+
+enum ApprovalLevel {
+  NIVEL_1
+  NIVEL_2
+  NIVEL_3
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(REQUESTER)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  requests Request[]
+  history  RequestHistory[]
+
+  @@map("users")
+}
+
+model Request {
+  id            String          @id @default(uuid())
+  title         String
+  description   String
+  amount        Decimal         @db.Decimal(12, 2)
+  category      RequestCategory
+  status        RequestStatus   @default(PENDING)
+  approvalLevel ApprovalLevel   @map("approval_level")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  requesterId String  @map("requester_id")
+  requester   User    @relation(fields: [requesterId], references: [id])
+  history     RequestHistory[]
+
+  @@map("requests")
+}
+
+model RequestHistory {
+  id        String   @id @default(uuid())
+  action    String
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  requestId String  @map("request_id")
+  request   Request @relation(fields: [requestId], references: [id])
+  userId    String  @map("user_id")
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@map("request_history")
 }
