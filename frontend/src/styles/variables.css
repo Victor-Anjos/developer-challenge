@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ── Design Tokens ── */
+:root {
+  /* PRIMARY (AZUL CORPORATIVO) */
+  --blue:         #1E5AA8;
+  --blue-dark:    #0B3D91;
+  --blue-mid:     #2F6FDE;
+  --blue-light:   #EAF1FF;
+  
+  --orange:       #2F6FDE;
+  --orange-dark:  #1E5AA8;
+  --orange-light: #EAF1FF;
+  /* BACKGROUNDS */
+  --bg:           #FFFFFF;
+  --surface:      #F4F6F9;
+  --gray-light:   #F4F6F9;
+  --border:       #D0D7E2;
+  /* TEXTOS */
+  --text:         #1C1F23;
+  --muted:        #5B6470;
+  --subtle:       #8A94A6;
+  --green:        #059669;
+  --green-light:  #D1FAE5;
+  --red:          #DC2626;
+  --red-light:    #FEE2E2;
+  --amber:        #D97706;
+  --amber-light:  #FEF3C7;
+  /* UI */
+  --radius:       8px;
+  --radius-lg:    12px;
+
+  --shadow:       0 1px 3px rgba(30, 90, 168, 0.10);
+  --shadow-md:    0 4px 12px rgba(30, 90, 168, 0.15);
+}
