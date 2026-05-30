@@ -23,6 +23,10 @@ interface ListRequestsQuery {
   role?: Role;
 }
 
+const REQUESTER_INCLUDE = {
+  requester: { select: { id: true, name: true, email: true } },
+};
+
 export const requestsService = {
   async create({ title, description, amount, category, requesterId }: CreateRequestInput) {
     if (!title || !description || !amount || !category) {
@@ -36,23 +40,12 @@ export const requestsService = {
     const approvalLevel = calculateApprovalLevel(amount) as ApprovalLevel;
 
     const request = await prisma.request.create({
-      data: {
-        title,
-        description,
-        amount,
-        category,
-        approvalLevel,
-        requesterId,
-      },
+      data: { title, description, amount, category, approvalLevel, requesterId },
+      include: REQUESTER_INCLUDE,
     });
 
     await prisma.requestHistory.create({
-      data: {
-        requestId: request.id,
-        userId: requesterId,
-        action: 'CREATED',
-        comment: null,
-      },
+      data: { requestId: request.id, userId: requesterId, action: 'CREATED', comment: null },
     });
 
     return request;
@@ -64,12 +57,8 @@ export const requestsService = {
     const skip     = (pageNum - 1) * limitNum;
 
     const where: any = {};
-
     if (status) where.status = status;
-
-    if (role === Role.REQUESTER) {
-      where.requesterId = requesterId;
-    }
+    if (role === Role.REQUESTER) where.requesterId = requesterId;
 
     const [data, total] = await prisma.$transaction([
       prisma.request.findMany({
@@ -77,31 +66,24 @@ export const requestsService = {
         skip,
         take: limitNum,
         orderBy: { createdAt: 'desc' },
-        include: { requester: { select: { id: true, name: true, email: true } } },
+        include: REQUESTER_INCLUDE,
       }),
       prisma.request.count({ where }),
     ]);
 
     return {
       data,
-      meta: {
-        total,
-        page: pageNum,
-        limit: limitNum,
-        totalPages: Math.ceil(total / limitNum),
-      },
+      meta: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) },
     };
   },
 
   async findById(id: string) {
     const request = await prisma.request.findUnique({
       where: { id },
-      include: { requester: { select: { id: true, name: true, email: true } } },
+      include: REQUESTER_INCLUDE,
     });
 
-    if (!request) {
-      throw new AppError('Solicitação não encontrada.', 404);
-    }
+    if (!request) throw new AppError('Solicitação não encontrada.', 404);
 
     return request;
   },
@@ -113,7 +95,7 @@ export const requestsService = {
     assertApprovalPermission(Number(request.amount), role);
 
     return prisma.$transaction(async (tx) => {
-      const updated = await tx.request.update({
+      await tx.request.update({
         where: { id },
         data: { status: RequestStatus.APPROVED },
       });
@@ -122,7 +104,10 @@ export const requestsService = {
         data: { requestId: id, userId, action: 'APPROVED', comment },
       });
 
-      return updated;
+      return tx.request.findUnique({
+        where: { id },
+        include: REQUESTER_INCLUDE,
+      });
     });
   },
 
@@ -133,7 +118,7 @@ export const requestsService = {
     assertApprovalPermission(Number(request.amount), role);
 
     return prisma.$transaction(async (tx) => {
-      const updated = await tx.request.update({
+      await tx.request.update({
         where: { id },
         data: { status: RequestStatus.REJECTED },
       });
@@ -142,7 +127,10 @@ export const requestsService = {
         data: { requestId: id, userId, action: 'REJECTED', comment },
       });
 
-      return updated;
+      return tx.request.findUnique({
+        where: { id },
+        include: REQUESTER_INCLUDE,
+      });
     });
   },
 
@@ -156,7 +144,7 @@ export const requestsService = {
     }
 
     return prisma.$transaction(async (tx) => {
-      const updated = await tx.request.update({
+      await tx.request.update({
         where: { id },
         data: { status: RequestStatus.CANCELLED },
       });
@@ -165,7 +153,10 @@ export const requestsService = {
         data: { requestId: id, userId, action: 'CANCELLED', comment },
       });
 
-      return updated;
+      return tx.request.findUnique({
+        where: { id },
+        include: REQUESTER_INCLUDE,
+      });
     });
   },
 
