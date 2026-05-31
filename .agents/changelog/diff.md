@@ -483,3 +483,51 @@
 - **Agent**: ClaudeCode
 - **Date**: 2026-05-30 23:30
 - **Description**: Fixed category-badge: replaced background var(--gray-light)=#F4F6F9 (same as surface) with #DDE2EA + border #C4CBD8, matching the cancelled badge fix
+
+---
+- **File**: `frontend/src/components/NewRequestModal.tsx`
+- **Additions**: +151
+- **Removals**: 0
+- **Agent**: ClaudeCode
+- **Date**: 2026-05-31 00:00
+- **Description**: Created NewRequestModal component: modal overlay with ESC/click-outside close, React Hook Form + Zod validation (title/description/amount/category), real-time ApprovalHint, toast.success on create, toast.error on API error, navigates to /requests/:id on success, calls onSuccess callback to refresh the listing
+
+---
+- **File**: `frontend/src/pages/RequestsPage.tsx`
+- **Additions**: +14
+- **Removals**: -8
+- **Agent**: ClaudeCode
+- **Date**: 2026-05-31 00:00
+- **Description**: Replaced Link to /requests/new with a button that opens NewRequestModal; extracted fetchRequests function so onSuccess can re-trigger it; added modalOpen state; replaced empty-state Link with button; imported NewRequestModal
+
+---
+- **File**: `frontend/src/components/Sidebar.tsx`
+- **Additions**: 0
+- **Removals**: -10
+- **Agent**: ClaudeCode
+- **Date**: 2026-05-31 00:00
+- **Description**: Removed "Nova Solicitação" NavLink (REQUESTER-only) since the action is now handled by the modal on RequestsPage
+
+---
+- **File**: `frontend/src/App.tsx`
+- **Additions**: 0
+- **Removals**: -2
+- **Agent**: ClaudeCode
+- **Date**: 2026-05-31 00:00
+- **Description**: Removed NewRequestPage import and /requests/new route; the new-request flow is now a modal on RequestsPage
+
+---
+- **File**: `frontend/src/styles/components.css`
+- **Additions**: +44
+- **Removals**: 0
+- **Agent**: ClaudeCode
+- **Date**: 2026-05-31 00:00
+- **Description**: Added modal styles: .modal-overlay (fixed fullscreen, rgba backdrop, z-index 1000, flex center), .modal (surface bg, radius-lg, padding 32px, max-width 600px, max-height 90vh, shadow-md), .modal-header, .modal-title, .modal-close
+
+---
+- **File**: `frontend/src/pages/NewRequestPage.tsx`
+- **Additions**: 0
+- **Removals**: -180
+- **Agent**: ClaudeCode
+- **Date**: 2026-05-31 00:00
+- **Description**: Deleted NewRequestPage; functionality fully migrated to NewRequestModal component
