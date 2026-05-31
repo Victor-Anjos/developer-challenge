@@ -1,137 +1,107 @@
-import { useState } from 'react';
-import type { SubmitEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+
+const schema = z.object({
+  email: z.string().email('Informe um e-mail válido'),
+  password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
+});
+
+type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const { login, user } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+  });
 
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  if (user) return <Navigate to="/dashboard" replace />;
 
-  async function handleSubmit(e: SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    setError('');
-    setLoading(true);
-
+  async function onSubmit(data: FormData) {
     try {
-      await login(email, password);
+      await login(data.email, data.password);
       navigate('/dashboard');
     } catch (err: any) {
       const message =
-        err?.response?.data?.message ??
-        'Erro ao fazer login. Tente novamente.';
-      setError(message);
-    } finally {
-      setLoading(false);
+        err?.response?.data?.error ?? 'Erro ao fazer login. Tente novamente.';
+      setError('root', { message });
     }
   }
 
   return (
     <div className="login-page">
-      {/* Lado esquerdo - Mantido igual */}
       <div className="login-left">
         <div className="login-left-content">
           <div className="login-logo">
             <span className="login-brand-king">Kingspan</span>
           </div>
-
           <h1 className="login-hero-title">
-            Gestão de
-            <br />
-            Compras
+            Gestão de<br />Compras
           </h1>
-
           <p className="login-hero-description">
             Solicite, acompanhe e aprove requisições de compra
             em um fluxo único com rastreabilidade completa,
             aprovação por níveis e histórico de auditoria.
           </p>
         </div>
-
-        <div className="login-footer">
-          © 2026 Kingspan - Uso interno
-        </div>
+        <div className="login-footer">© 2026 Kingspan - Uso interno</div>
       </div>
 
-      {/* Lado direito - CORRIGIDO */}
       <div className="login-right">
         <div className="login-form-wrapper">
-          <h1 className="login-title">
-            Bem-vindo de volta
-          </h1>
+          <h1 className="login-title">Bem-vindo de volta</h1>
+          <p className="login-subtitle">Entre com sua conta corporativa Kingspan.</p>
 
-          <p className="login-subtitle">
-            Entre com sua conta corporativa Kingspan.
-          </p>
-
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className="form-group">
-              <label className="form-label" htmlFor="email">
-                E-mail corporativo
-              </label>
+              <label className="form-label" htmlFor="email">E-mail corporativo</label>
               <input
                 id="email"
                 type="email"
-                className="form-input login-input"
+                className={`form-input login-input ${errors.email ? 'input-error' : ''}`}
                 placeholder="Digite seu e-mail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
-                required
+                {...register('email')}
               />
+              {errors.email && (
+                <span className="field-error">{errors.email.message}</span>
+              )}
             </div>
 
             <div className="form-group">
-              <label className="form-label" htmlFor="password">
-                Senha
-              </label>
+              <label className="form-label" htmlFor="password">Senha</label>
               <input
                 id="password"
                 type="password"
-                className="form-input login-input"
+                className={`form-input login-input ${errors.password ? 'input-error' : ''}`}
                 placeholder="Digite sua senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                required
+                {...register('password')}
               />
+              {errors.password && (
+                <span className="field-error">{errors.password.message}</span>
+              )}
             </div>
 
-            {/* Checkbox "Manter conectado" - ADICIONADO */}
-            <div className="login-checkbox-wrapper">
-              <label className="login-checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="login-checkbox"
-                />
-                <span>Manter conectado</span>
-              </label>
-            </div>
-
-            {error && (
-              <div className="form-error">
-                {error}
-              </div>
+            {errors.root && (
+              <div className="form-error">{errors.root.message}</div>
             )}
 
             <button
               type="submit"
               className="btn btn-primary btn-full login-submit"
-              disabled={loading}
+              disabled={isSubmitting}
             >
-              {loading ? 'Entrando...' : 'Entrar'}
+              {isSubmitting ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
 

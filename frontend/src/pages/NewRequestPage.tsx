@@ -1,4 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { requestsService } from '../services/requests';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,56 +15,66 @@ const CATEGORIES: { value: RequestCategory; label: string }[] = [
   { value: 'OTHER',     label: 'Outros' },
 ];
 
-type HintLevel = 'green' | 'amber' | 'red';
+const schema = z.object({
+  title:       z.string().min(3, 'Título deve ter no mínimo 3 caracteres'),
+  description: z.string().min(10, 'Descrição deve ter no mínimo 10 caracteres'),
+  amount: z.string()
+  .min(1, 'Informe um valor')
+  .refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0, 'O valor deve ser maior que zero'),
+  category:    z.enum(['EQUIPMENT', 'SERVICES', 'SUPPLIES', 'TRAVEL', 'OTHER']),
+});
 
-interface ApprovalHint {
-  level: HintLevel;
-  text: string;
+type FormData = z.infer<typeof schema>;
+
+function getApprovalHint(value: number) {
+  if (!value || value <= 0) return null;
+  if (value <= 1000)  return { level: 'green', text: 'Qualquer aprovador pode aprovar' };
+  if (value <= 10000) return { level: 'amber', text: 'Requer aprovador sênior ou administrador' };
+  return { level: 'red', text: 'Requer aprovação do administrador' };
 }
 
-function getApprovalHint(value: number): ApprovalHint | null {
-  if (!value || value <= 0) return null;
-  if (value <= 1000) return { level: 'green', text: '✓ Qualquer aprovador pode aprovar' };
-  if (value <= 10000) return { level: 'amber', text: '⚠ Requer aprovador sênior ou administrador' };
-  return { level: 'red', text: '⚑ Requer aprovação do administrador' };
+function ApprovalHint({ control }: { control: any }) {
+  const amount = useWatch({ control, name: 'amount' });
+  const hint = getApprovalHint(Number(amount));
+  if (!hint) return null;
+  return (
+    <div className={`approval-hint approval-hint--${hint.level}`}>
+      {hint.text}
+    </div>
+  );
 }
 
 export default function NewRequestPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState<RequestCategory>('EQUIPMENT');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    control,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: { category: 'EQUIPMENT' },
+  });
 
   if (user?.role !== 'REQUESTER') {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const amountNum = parseFloat(amount.replace(',', '.'));
-  const hint = isNaN(amountNum) ? null : getApprovalHint(amountNum);
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError('');
-
-    if (isNaN(amountNum) || amountNum <= 0) {
-      setError('Informe um valor válido maior que zero.');
-      return;
-    }
-
-    setLoading(true);
+  async function onSubmit(data: FormData) {
     try {
-      const req = await requestsService.create({ title, description, amount: amountNum, category });
+      const req = await requestsService.create({
+        title:       data.title,
+        description: data.description,
+        amount: parseFloat(data.amount),
+        category:    data.category as RequestCategory,
+      });
       navigate(`/requests/${req.id}`);
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? 'Erro ao criar solicitação.';
-      setError(msg);
-    } finally {
-      setLoading(false);
+      const msg = err?.response?.data?.error ?? 'Erro ao criar solicitação.';
+      setError('root', { message: msg });
     }
   }
 
@@ -70,13 +83,6 @@ export default function NewRequestPage() {
       <div className="page-header">
         <div className="page-header-left">
           <div className="nr-title-row">
-            <div className="nr-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 0 1-8 0" />
-              </svg>
-            </div>
             <div>
               <h1 className="page-title">Nova Solicitação</h1>
               <p className="page-subtitle">Preencha os dados da solicitação de compra</p>
@@ -86,7 +92,7 @@ export default function NewRequestPage() {
       </div>
 
       <div className="form-card-rich">
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <div className="form-section">
             <h3 className="form-section-title">Informações básicas</h3>
 
@@ -95,26 +101,24 @@ export default function NewRequestPage() {
               <input
                 id="title"
                 type="text"
-                className="form-input"
+                className={`form-input ${errors.title ? 'input-error' : ''}`}
                 placeholder="Ex: Notebook Dell Inspiron"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
                 maxLength={120}
+                {...register('title')}
               />
+              {errors.title && <span className="field-error">{errors.title.message}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label" htmlFor="description">Descrição</label>
               <textarea
                 id="description"
-                className="form-input form-textarea"
+                className={`form-input form-textarea ${errors.description ? 'input-error' : ''}`}
                 placeholder="Descreva a necessidade e justificativa da compra…"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
                 rows={4}
+                {...register('description')}
               />
+              {errors.description && <span className="field-error">{errors.description.message}</span>}
             </div>
           </div>
 
@@ -128,49 +132,43 @@ export default function NewRequestPage() {
                   id="amount"
                   type="number"
                   step="0.01"
-                  min="0.01"
-                  className="form-input"
+                  className={`form-input ${errors.amount ? 'input-error' : ''}`}
                   placeholder="0,00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
+                  {...register('amount')}
                 />
-                {hint && (
-                  <div className={`approval-hint approval-hint--${hint.level}`}>
-                    {hint.text}
-                  </div>
-                )}
+                {errors.amount && <span className="field-error">{errors.amount.message}</span>}
+                <ApprovalHint control={control} />
               </div>
 
               <div className="form-group">
                 <label className="form-label" htmlFor="category">Categoria</label>
                 <select
                   id="category"
-                  className="form-input form-select"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as RequestCategory)}
+                  className={`form-input form-select ${errors.category ? 'input-error' : ''}`}
+                  {...register('category')}
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c.value} value={c.value}>{c.label}</option>
                   ))}
                 </select>
+                {errors.category && <span className="field-error">{errors.category.message}</span>}
               </div>
             </div>
           </div>
 
-          {error && <div className="form-error">{error}</div>}
+          {errors.root && <div className="form-error">{errors.root.message}</div>}
 
           <div className="form-actions">
             <button
               type="button"
               className="btn btn-outline"
               onClick={() => navigate('/requests')}
-              disabled={loading}
+              disabled={isSubmitting}
             >
               Cancelar
             </button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Enviando…' : 'Enviar Solicitação'}
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? 'Enviando…' : 'Enviar Solicitação'}
             </button>
           </div>
         </form>
