@@ -152,32 +152,35 @@ export default function RequestsPage() {
                   </td>
                 </tr>
               ))}
+              
             </tbody>
           </table>
         )}
-      </div>
 
-      {!loading && totalPages > 1 && (
-        <div className="pagination">
-          <button
-            className="btn btn-outline"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            Anterior
-          </button>
-          <span className="pagination-info">
-            Página {page} de {totalPages}
-          </span>
-          <button
-            className="btn btn-outline"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Próxima
-          </button>
-        </div>
-      )}
+        {!loading && totalPages > 1 && (
+              <div className="table-footer">
+                <span className="table-footer-info">
+                  Página {page} de {totalPages}
+                </span>
+                <div className="table-footer-actions">
+                  <button
+                    className="btn btn-outline btn-sm"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    {'<'} Anterior
+                  </button>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Próxima {'>'}
+                  </button>
+                </div>
+              </div>
+            )}
+      </div>
     </div>
   );
 }

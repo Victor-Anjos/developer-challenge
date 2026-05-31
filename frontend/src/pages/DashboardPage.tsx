@@ -46,8 +46,6 @@ export default function DashboardPage() {
   useEffect(() => {
   setLoading(true);
   
-  let hasError = false;
-  
   Promise.all([
     requestsService.list({ status: 'PENDING',   limit: 1 }),
     requestsService.list({ status: 'APPROVED',  limit: 1 }),
