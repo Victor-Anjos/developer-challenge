@@ -105,10 +105,6 @@ export default function DashboardPage() {
             </div>
 
             <div className="dash-section">
-              <div className="section-header">
-                <h2 className="section-title">Solicitações recentes</h2>
-                <Link to="/requests" className="section-link">Ver todas →</Link>
-              </div>
 
               {recentRequests.length === 0 ? (
                 <div className="empty-state" style={{ padding: '40px 24px' }}>
@@ -116,6 +112,10 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="table-container">
+                  <div className="table-toolbar">
+                    <h2 className="section-title">Solicitações recentes</h2>
+                    <Link to="/requests" className="section-link">Ver todas →</Link>
+                  </div>
                   <table className="requests-table">
                     <thead>
                       <tr>
