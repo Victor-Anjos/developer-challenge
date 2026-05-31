@@ -4,6 +4,7 @@ import { requestsService } from '../services/requests';
 import type { PurchaseRequest, RequestHistoryEntry } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import StatusBadge from '../components/StatusBadge';
+import toast from 'react-hot-toast';
 
 const CATEGORY_LABELS: Record<string, string> = {
   EQUIPMENT: 'Equipamentos',
@@ -82,25 +83,36 @@ export default function RequestDetailPage() {
   }, [id]);
 
   async function executeAction(action: 'approve' | 'reject' | 'cancel') {
-    if (!id) return;
-    setActionError('');
-    setActionLoading(action);
-    try {
-      let updated: PurchaseRequest;
-      if (action === 'approve')      updated = await requestsService.approve(id, comment || undefined);
-      else if (action === 'reject')  updated = await requestsService.reject(id, comment || undefined);
-      else                           updated = await requestsService.cancel(id, comment || undefined);
-      setRequest(updated);
-      const hist = await requestsService.history(id);
-      setHistory(hist);
-      setComment('');
-      setShowCommentFor(null);
-    } catch (err: any) {
-      setActionError(err?.response?.data?.message ?? 'Erro ao executar ação.');
-    } finally {
-      setActionLoading(null);
-    }
+  if (!id) return;
+  setActionError('');
+  setActionLoading(action);
+  try {
+    let updated: PurchaseRequest;
+    if (action === 'approve')      updated = await requestsService.approve(id, comment || undefined);
+    else if (action === 'reject')  updated = await requestsService.reject(id, comment || undefined);
+    else                           updated = await requestsService.cancel(id, comment || undefined);
+
+    setRequest(updated);
+    const hist = await requestsService.history(id);
+    setHistory(hist);
+    setComment('');
+    setShowCommentFor(null);
+
+    const successMessages = {
+      approve: 'Solicitação aprovada com sucesso!',
+      reject:  'Solicitação rejeitada.',
+      cancel:  'Solicitação cancelada.',
+    };
+    toast.success(successMessages[action]);
+
+  } catch (err: any) {
+    const msg = err?.response?.data?.error ?? 'Erro ao executar ação.';
+    setActionError(msg);
+    toast.error(msg, { id: 'action-error' });
+  } finally {
+    setActionLoading(null);
   }
+}
 
   function startAction(action: 'approve' | 'reject' | 'cancel') {
     setActionError('');
@@ -127,7 +139,6 @@ export default function RequestDetailPage() {
 
   return (
     <div className="page">
-      {/* ── Page header ── */}
       <div className="detail-page-header">
         <button className="btn-back" onClick={() => navigate(-1)}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -142,10 +153,9 @@ export default function RequestDetailPage() {
       </div>
 
       <div className="detail-grid">
-        {/* ── Main column ── */}
         <div className="detail-main">
 
-          {/* Card: Info */}
+         
           <div className="detail-card">
             <h2 className="detail-title">{request.title}</h2>
             {request.description && (
@@ -153,7 +163,7 @@ export default function RequestDetailPage() {
             )}
 
             <div className="detail-meta-grid">
-              {/* Row 1 */}
+              
               <div className="detail-meta-item">
                 <span className="detail-meta-label">Valor</span>
                 <span className="detail-amount">{formatCurrency(request.amount)}</span>
@@ -171,7 +181,7 @@ export default function RequestDetailPage() {
                 </span>
               </div>
 
-              {/* Row 2 */}
+              
               <div className="detail-meta-item">
                 <span className="detail-meta-label">Solicitante</span>
                 <div className="detail-requester-cell">
@@ -192,7 +202,7 @@ export default function RequestDetailPage() {
             </div>
           </div>
 
-          {/* Card: Actions */}
+          
           {showActionsCard && (
             <div className="action-card">
               <h3 className="action-card-title">Ações disponíveis</h3>
@@ -267,7 +277,7 @@ export default function RequestDetailPage() {
           )}
         </div>
 
-        {/* ── Sidebar: History ── */}
+        
         <div className="detail-sidebar">
           <div className="detail-card">
             <h3 className="history-title">Histórico de ações</h3>

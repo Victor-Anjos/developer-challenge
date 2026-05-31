@@ -4,6 +4,7 @@ import { requestsService } from '../services/requests';
 import type { PurchaseRequest } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import StatusBadge from '../components/StatusBadge';
+import toast from 'react-hot-toast';
 
 const CATEGORY_LABELS: Record<string, string> = {
   EQUIPMENT: 'Equipamentos',
@@ -43,25 +44,32 @@ export default function DashboardPage() {
   const isApprover = user ? APPROVER_ROLES.includes(user.role) : false;
 
   useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      requestsService.list({ status: 'PENDING', limit: 1 }),
-      requestsService.list({ status: 'APPROVED', limit: 1 }),
-      requestsService.list({ status: 'REJECTED', limit: 1 }),
-      requestsService.list({ status: 'CANCELLED', limit: 1 }),
-      requestsService.list({ limit: 5 }),
-    ])
-      .then(([pending, approved, rejected, cancelled, recent]) => {
-        setMetrics({
-          pending: pending.meta.total,
-          approved: approved.meta.total,
-          rejected: rejected.meta.total,
-          cancelled: cancelled.meta.total,
-        });
-        setRecentRequests(recent.data);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  setLoading(true);
+  
+  let hasError = false;
+  
+  Promise.all([
+    requestsService.list({ status: 'PENDING',   limit: 1 }),
+    requestsService.list({ status: 'APPROVED',  limit: 1 }),
+    requestsService.list({ status: 'REJECTED',  limit: 1 }),
+    requestsService.list({ status: 'CANCELLED', limit: 1 }),
+    requestsService.list({ limit: 5 }),
+  ])
+    .then(([pending, approved, rejected, cancelled, recent]) => {
+      setMetrics({
+        pending:   pending.meta.total,
+        approved:  approved.meta.total,
+        rejected:  rejected.meta.total,
+        cancelled: cancelled.meta.total,
+      });
+      setRecentRequests(recent.data);
+    })
+    .catch(() => {
+  toast.dismiss('dashboard-error');
+  toast.error('Erro ao carregar o painel. Tente novamente.', { id: 'dashboard-error' });
+})
+    .finally(() => setLoading(false));
+}, []);
 
   return (
     <div className="page">

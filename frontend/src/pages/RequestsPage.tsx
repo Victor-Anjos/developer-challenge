@@ -4,20 +4,21 @@ import { requestsService } from '../services/requests';
 import type { PurchaseRequest, RequestStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import StatusBadge from '../components/StatusBadge';
+import toast from 'react-hot-toast';
 
 const CATEGORY_LABELS: Record<string, string> = {
   EQUIPMENT: 'Equipamentos',
-  SERVICES: 'Serviços',
-  SUPPLIES: 'Suprimentos',
-  TRAVEL: 'Viagem',
-  OTHER: 'Outros',
+  SERVICES:  'Serviços',
+  SUPPLIES:  'Suprimentos',
+  TRAVEL:    'Viagem',
+  OTHER:     'Outros',
 };
 
 const STATUS_FILTERS: { value: RequestStatus | ''; label: string }[] = [
-  { value: '', label: 'Todos' },
-  { value: 'PENDING', label: 'Pendentes' },
-  { value: 'APPROVED', label: 'Aprovadas' },
-  { value: 'REJECTED', label: 'Rejeitadas' },
+  { value: '',          label: 'Todos' },
+  { value: 'PENDING',   label: 'Pendentes' },
+  { value: 'APPROVED',  label: 'Aprovadas' },
+  { value: 'REJECTED',  label: 'Rejeitadas' },
   { value: 'CANCELLED', label: 'Canceladas' },
 ];
 
@@ -43,18 +44,16 @@ export default function RequestsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     setLoading(true);
-    setError('');
     requestsService
       .list({ page, status })
       .then((res) => {
         setRequests(res.data);
         setTotalPages(res.meta.totalPages);
       })
-      .catch(() => setError('Erro ao carregar solicitações.'))
+      .catch(() => toast.error('Erro ao carregar solicitações.', { id: 'requests-error' }))
       .finally(() => setLoading(false));
   }, [page, status]);
 
@@ -98,10 +97,6 @@ export default function RequestsPage() {
         {loading ? (
           <div className="loading-area">
             <div className="spinner" />
-          </div>
-        ) : error ? (
-          <div style={{ padding: '20px' }}>
-            <div className="alert alert-error">{error}</div>
           </div>
         ) : requests.length === 0 ? (
           <div className="empty-state">
@@ -162,15 +157,23 @@ export default function RequestsPage() {
         )}
       </div>
 
-      {!loading && !error && totalPages > 1 && (
+      {!loading && totalPages > 1 && (
         <div className="pagination">
-          <button className="btn btn-outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+          <button
+            className="btn btn-outline"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
             Anterior
           </button>
           <span className="pagination-info">
             Página {page} de {totalPages}
           </span>
-          <button className="btn btn-outline" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+          <button
+            className="btn btn-outline"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
             Próxima
           </button>
         </div>

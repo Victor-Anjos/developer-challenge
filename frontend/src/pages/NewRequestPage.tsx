@@ -6,6 +6,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { requestsService } from '../services/requests';
 import { useAuth } from '../contexts/AuthContext';
 import type { RequestCategory } from '../types';
+import toast from 'react-hot-toast';
 
 const CATEGORIES: { value: RequestCategory; label: string }[] = [
   { value: 'EQUIPMENT', label: 'Equipamentos' },
@@ -71,6 +72,7 @@ export default function NewRequestPage() {
         amount: parseFloat(data.amount),
         category:    data.category as RequestCategory,
       });
+      toast.success('Solicitação criada com sucesso!');
       navigate(`/requests/${req.id}`);
     } catch (err: any) {
       const msg = err?.response?.data?.error ?? 'Erro ao criar solicitação.';

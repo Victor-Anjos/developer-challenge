@@ -9,30 +9,36 @@ import RequestsPage from './pages/RequestsPage';
 import NewRequestPage from './pages/NewRequestPage';
 import RequestDetailPage from './pages/RequestDetailPage';
 
+import { Toaster } from 'react-hot-toast';
+
+
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+    <>
+      <Toaster position="bottom-right" />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
 
-          <Route
-            element={
-              <ProtectedRoute>
-                <AppLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/requests" element={<RequestsPage />} />
-            <Route path="/requests/new" element={<NewRequestPage />} />
-            <Route path="/requests/:id" element={<RequestDetailPage />} />
-          </Route>
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/requests" element={<RequestsPage />} />
+                <Route path="/requests/new" element={<NewRequestPage />} />
+                <Route path="/requests/:id" element={<RequestDetailPage />} />
+              </Route>
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+    </>
   );
 }
