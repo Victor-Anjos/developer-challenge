@@ -96,7 +96,7 @@ export default function DashboardPage() {
                 <div className="metric-label">Canceladas</div>
                 <div className="metric-value">{metrics.cancelled}</div>
               </div>
-            </div>{/* .metrics-strip */}
+            </div>
 
             <div className="dash-section">
               <div className="section-header">

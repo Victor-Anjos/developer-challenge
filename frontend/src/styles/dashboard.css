@@ -85,7 +85,7 @@
 .requests-table th:nth-child(6), .requests-table td:nth-child(6) { width: 11%; }
 .requests-table th:nth-child(7), .requests-table td:nth-child(7) { width: 16%; }
 
-/* Solicitante — evita quebra de nome */
+/* Solicitante */
 .requests-table td:nth-child(4) .requester-name {
   white-space: nowrap;
   overflow: hidden;

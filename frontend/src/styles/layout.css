@@ -42,10 +42,6 @@
   color: var(--text);
   margin: 0;
   letter-spacing: -0.3px;
-  background: linear-gradient(135deg, var(--text) 0%, var(--blue) 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
 }
 
 @media (max-width: 768px) {
