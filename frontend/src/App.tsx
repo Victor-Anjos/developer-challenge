@@ -6,7 +6,6 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import RequestsPage from './pages/RequestsPage';
-import NewRequestPage from './pages/NewRequestPage';
 import RequestDetailPage from './pages/RequestDetailPage';
 
 import { Toaster } from 'react-hot-toast';
@@ -31,7 +30,6 @@ export default function App() {
               >
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/requests" element={<RequestsPage />} />
-                <Route path="/requests/new" element={<NewRequestPage />} />
                 <Route path="/requests/:id" element={<RequestDetailPage />} />
               </Route>
 

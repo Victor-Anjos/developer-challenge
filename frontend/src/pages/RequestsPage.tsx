@@ -4,6 +4,7 @@ import { requestsService } from '../services/requests';
 import type { PurchaseRequest, RequestStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import StatusBadge from '../components/StatusBadge';
+import NewRequestModal from '../components/NewRequestModal';
 import toast from 'react-hot-toast';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -44,8 +45,9 @@ export default function RequestsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
+  function fetchRequests() {
     setLoading(true);
     requestsService
       .list({ page, status })
@@ -55,6 +57,10 @@ export default function RequestsPage() {
       })
       .catch(() => toast.error('Erro ao carregar solicitações.', { id: 'requests-error' }))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    fetchRequests();
   }, [page, status]);
 
   const handleStatusChange = (value: RequestStatus | '') => {
@@ -72,9 +78,9 @@ export default function RequestsPage() {
           <p className="page-subtitle">Gerencie e acompanhe todas as solicitações de compra</p>
         </div>
         {user?.role === 'REQUESTER' && (
-          <Link to="/requests/new" className="btn btn-primary">
+          <button className="btn btn-primary" onClick={() => setModalOpen(true)}>
             + Nova Solicitação
-          </Link>
+          </button>
         )}
       </div>
 
@@ -102,9 +108,9 @@ export default function RequestsPage() {
           <div className="empty-state">
             <p>Nenhuma solicitação encontrada.</p>
             {user?.role === 'REQUESTER' && (
-              <Link to="/requests/new" className="btn btn-primary" style={{ marginTop: 16 }}>
+              <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={() => setModalOpen(true)}>
                 Criar primeira solicitação
-              </Link>
+              </button>
             )}
           </div>
         ) : (
@@ -181,6 +187,13 @@ export default function RequestsPage() {
               </div>
             )}
       </div>
+
+      {modalOpen && (
+        <NewRequestModal
+          onClose={() => setModalOpen(false)}
+          onSuccess={fetchRequests}
+        />
+      )}
     </div>
   );
 }
