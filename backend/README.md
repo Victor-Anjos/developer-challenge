@@ -16,7 +16,25 @@ API REST para o sistema interno de gestão de solicitações de compra com fluxo
 - Node.js v18+
 - Docker
 
-## Instalação
+## Rodando com Docker (recomendado)
+
+Na raiz do projeto rode:
+
+```bash
+docker-compose up --build
+```
+
+Em outro terminal, rode as migrations e o seed:
+
+```bash
+docker exec kingspan-api npx prisma db push
+docker exec kingspan-api npx ts-node prisma/seed.ts
+```
+
+Frontend disponível em `http://localhost`
+Backend disponível em `http://localhost:3333`
+
+## Rodando localmente
 
 Instalar dependências e configurar variáveis de ambiente:
 
@@ -24,17 +42,6 @@ Instalar dependências e configurar variáveis de ambiente:
 npm install
 cp .env.example .env
 ```
-
-## Variáveis de ambiente
-
-```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/kingspan"
-JWT_SECRET="kingspan-secret-2026"
-JWT_EXPIRES_IN="7d"
-PORT=3333
-```
-
-## Banco de dados
 
 Subir o PostgreSQL via Docker:
 
@@ -57,22 +64,7 @@ Popular o banco com usuários de exemplo:
 npm run seed
 ```
 
-## Rodando com Docker Compose (alternativa)
-
-Sobe o banco e a API automaticamente:
-
-```bash
-docker-compose up --build
-```
-
-Em outro terminal, rode as migrations e o seed:
-
-```bash
-docker-compose exec api npx prisma migrate deploy
-docker-compose exec api npm run seed
-```
-
-## Rodando o projeto
+Rodar o servidor:
 
 ```bash
 npm run dev
@@ -80,50 +72,47 @@ npm run dev
 
 Servidor disponível em `http://localhost:3333`
 
-## Verificando se a API está rodando
+## Variáveis de ambiente
 
-```bash
-curl http://localhost:3333/health
-```
-
-Resposta esperada:
-
-```json
-{ "status": "ok" }
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/kingspan"
+JWT_SECRET="kingspan-secret-2026"
+JWT_EXPIRES_IN="7d"
+PORT=3333
 ```
 
 ## Usuários de exemplo
 
 Após rodar o seed, os seguintes usuários estarão disponíveis:
 
-| Email                      | Senha  | Role            |
-| -------------------------- | ------ | --------------- |
-| solicitante@kingspan.com   | 123456 | REQUESTER       |
-| aprovador@kingspan.com     | 123456 | APPROVER        |
-| senior@kingspan.com        | 123456 | APPROVER_SENIOR |
-| admin@kingspan.com         | 123456 | ADMIN           |
+| Email                    | Senha  | Role            |
+|--------------------------|--------|-----------------|
+| solicitante@kingspan.com | 123456 | REQUESTER       |
+| aprovador@kingspan.com   | 123456 | APPROVER        |
+| senior@kingspan.com      | 123456 | APPROVER_SENIOR |
+| admin@kingspan.com       | 123456 | ADMIN           |
 
 ## Endpoints
 
 ### Autenticação
 
-| Método | Endpoint        | Descrição               | Auth |
-| ------ | --------------- | ----------------------- | ---- |
-| POST   | /auth/register  | Cadastrar usuário       | Não  |
-| POST   | /auth/login     | Login                   | Não  |
-| GET    | /auth/me        | Dados do usuário logado | Sim  |
+| Método | Endpoint       | Descrição               | Auth |
+|--------|----------------|-------------------------|------|
+| POST   | /auth/register | Cadastrar usuário       | Não  |
+| POST   | /auth/login    | Login                   | Não  |
+| GET    | /auth/me       | Dados do usuário logado | Sim  |
 
 ### Solicitações
 
-| Método | Endpoint                     | Descrição              | Auth |
-| ------ | ---------------------------- | ---------------------- | ---- |
-| GET    | /requests                    | Listar solicitações    | Sim  |
-| POST   | /requests                    | Criar solicitação      | Sim  |
-| GET    | /requests/:id                | Detalhar solicitação   | Sim  |
-| PATCH  | /requests/:id/approve        | Aprovar                | Sim  |
-| PATCH  | /requests/:id/reject         | Rejeitar               | Sim  |
-| PATCH  | /requests/:id/cancel         | Cancelar               | Sim  |
-| GET    | /requests/:id/history        | Histórico de ações     | Sim  |
+| Método | Endpoint              | Descrição            | Auth |
+|--------|-----------------------|----------------------|------|
+| GET    | /requests             | Listar solicitações  | Sim  |
+| POST   | /requests             | Criar solicitação    | Sim  |
+| GET    | /requests/:id         | Detalhar solicitação | Sim  |
+| PATCH  | /requests/:id/approve | Aprovar              | Sim  |
+| PATCH  | /requests/:id/reject  | Rejeitar             | Sim  |
+| PATCH  | /requests/:id/cancel  | Cancelar             | Sim  |
+| GET    | /requests/:id/history | Histórico de ações   | Sim  |
 
 ### Filtros disponíveis
 
@@ -167,11 +156,11 @@ O campo `comment` é opcional em approve, reject e cancel.
 
 ## Regras de aprovação por valor
 
-| Valor                          | Nível   | Quem pode aprovar                            |
-| ------------------------------ | ------- | -------------------------------------------- |
-| Até R$ 1.000,00                | NIVEL_1 | Qualquer APPROVER, APPROVER_SENIOR ou ADMIN  |
-| R$ 1.000,01 a R$ 10.000,00     | NIVEL_2 | APPROVER_SENIOR ou ADMIN                     |
-| Acima de R$ 10.000,00          | NIVEL_3 | Somente ADMIN                                |
+| Valor                      | Nível   | Quem pode aprovar                           |
+|----------------------------|---------|---------------------------------------------|
+| Até R$ 1.000,00            | NIVEL_1 | Qualquer APPROVER, APPROVER_SENIOR ou ADMIN |
+| R$ 1.000,01 a R$ 10.000,00 | NIVEL_2 | APPROVER_SENIOR ou ADMIN                    |
+| Acima de R$ 10.000,00      | NIVEL_3 | Somente ADMIN                               |
 
 ## Máquina de estados
 
@@ -187,11 +176,9 @@ CANCELLED → qualquer coisa  ❌ bloqueado
 
 Transições inválidas retornam **HTTP 422** com mensagem descritiva.
 
-Exemplo:
+## Diagrama ER
 
-```
-"Não é possível aprovar uma solicitação já cancelada."
-```
+[Ver diagrama ER no dbdiagram.io](https://dbdiagram.io/d/6a19af7ff15b4b04522fca11)
 
 ## Decisões técnicas
 

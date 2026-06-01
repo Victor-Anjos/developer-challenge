@@ -14,20 +14,32 @@ Interface web para o sistema interno de gestão de solicitações de compra com 
 
 ## Pré-requisitos
 
-- Node.js v18+
-- Backend rodando em `http://localhost:3333`
+- Node.js v18+ (para rodar localmente)
+- Docker (para rodar via container)
 
-## Instalação
+## Rodando com Docker (recomendado)
+
+Na raiz do projeto rode:
+
+```bash
+docker-compose up --build
+```
+
+Em outro terminal, rode as migrations e o seed:
+
+```bash
+docker exec kingspan-api npx prisma db push
+docker exec kingspan-api npx ts-node prisma/seed.ts
+```
+
+Frontend disponível em `http://localhost`
+
+## Rodando localmente
+
+Certifique-se de que o backend está rodando em `http://localhost:3333` antes de iniciar o frontend.
 
 ```bash
 npm install
-```
-
-## Rodando o projeto
-
-Certifique-se de que o backend está rodando antes de iniciar o frontend.
-
-```bash
 npm run dev
 ```
 
@@ -39,24 +51,24 @@ Não são necessárias variáveis de ambiente. O Vite está configurado com prox
 
 ## Contas de exemplo
 
-Após rodar o seed do backend (`npm run seed` dentro de `backend/`), as seguintes contas estarão disponíveis:
+Após rodar o seed, as seguintes contas estarão disponíveis:
 
-| Email | Senha | Perfil |
-|---|---|---|
-| solicitante@kingspan.com | 123456 | Solicitante |
-| aprovador@kingspan.com | 123456 | Aprovador |
-| senior@kingspan.com | 123456 | Aprovador Sênior |
-| admin@kingspan.com | 123456 | Administrador |
+| Email                    | Senha  | Perfil          |
+|--------------------------|--------|-----------------|
+| solicitante@kingspan.com | 123456 | Solicitante     |
+| aprovador@kingspan.com   | 123456 | Aprovador       |
+| senior@kingspan.com      | 123456 | Aprovador Sênior|
+| admin@kingspan.com       | 123456 | Administrador   |
 
 ## Páginas
 
-| Rota | Descrição | Acesso |
-|---|---|---|
-| /login | Tela de login | Público |
-| /register | Cadastro de novo usuário | Público |
-| /dashboard | Painel com resumo e métricas | Autenticado |
-| /requests | Listagem completa com filtros e paginação | Autenticado |
-| /requests/:id | Detalhe com histórico e ações | Autenticado |
+| Rota          | Descrição                        | Acesso        |
+|---------------|----------------------------------|---------------|
+| /login        | Tela de login                    | Público       |
+| /register     | Cadastro de novo usuário         | Público       |
+| /dashboard    | Painel com resumo e métricas     | Autenticado   |
+| /requests     | Listagem completa com filtros    | Autenticado   |
+| /requests/:id | Detalhe com histórico e ações    | Autenticado   |
 
 ## Regras de interface por perfil
 
@@ -82,21 +94,22 @@ Após rodar o seed do backend (`npm run seed` dentro de `backend/`), as seguinte
 
 ```
 src/
-├── components/       — componentes reutilizáveis (Sidebar, StatusBadge, NewRequestModal, etc)
-├── contexts/         — AuthContext com estado de autenticação
-├── pages/            — páginas da aplicação
-├── services/         — chamadas à API (auth, requests)
-├── styles/           — CSS modular por feature
-└── types/            — tipos TypeScript
+├── components/   — componentes reutilizáveis (Sidebar, StatusBadge, NewRequestModal, etc)
+├── contexts/     — AuthContext com estado de autenticação
+├── pages/        — páginas da aplicação
+├── services/     — chamadas à API (auth, requests)
+├── styles/       — CSS modular por feature
+└── types/        — tipos TypeScript
 ```
 
 ## Decisões técnicas
 
-- **Proxy Vite** — as chamadas de API usam `/api` como base URL. O Vite redireciona para `http://localhost:3333` em desenvolvimento, evitando problemas de CORS
+- **Proxy Vite** — em desenvolvimento as chamadas usam `/api` como base URL. O Vite redireciona para `http://localhost:3333`, evitando problemas de CORS
+- **Nginx em produção** — no Docker o nginx serve os arquivos estáticos e faz proxy das chamadas `/api` para o backend
 - **Context API** — gerenciamento de autenticação com persistência no localStorage
 - **CSS modular** — estilos separados por feature em `src/styles/` para facilitar manutenção
-- **Permissões no cliente** — botões de ação são exibidos condicionalmente com base no role do usuário e no status da solicitação, espelhando as regras do backend
+- **Permissões no cliente** — botões de ação exibidos condicionalmente com base no role e status, espelhando as regras do backend
 - **Interceptor Axios** — token JWT injetado automaticamente em todas as requisições, com redirect automático para `/login` em caso de 401
-- **React Hook Form + Zod** — validação de formulários com mensagens de erro específicas por campo em tempo real
+- **React Hook Form + Zod** — validação com mensagens de erro específicas por campo em tempo real
 - **Modal de criação** — nova solicitação abre em modal na listagem, mantendo o contexto da página
 - **Toast notifications** — feedback visual de sucesso e erro via react-hot-toast em todas as ações
